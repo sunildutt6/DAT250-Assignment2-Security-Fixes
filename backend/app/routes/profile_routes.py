@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.database import run_query
 from app.auth import get_user_from_session
-
+from fastapi import  HTTPException
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
