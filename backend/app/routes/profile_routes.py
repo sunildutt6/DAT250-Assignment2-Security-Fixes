@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 from app.database import run_query
 from app.auth import get_user_from_session
 
+
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 UPLOAD_DIR = "app/uploads"
@@ -53,10 +54,27 @@ def my_profile(request: Request):
 @router.get("/profile/{user_id}", response_class=HTMLResponse)
 def profile_by_id(request: Request, user_id: int):
     user = get_user_from_session(request)
+
     if not user:
         return RedirectResponse("/login", status_code=302)
-    profile = run_query("SELECT * FROM users WHERE id=%s", (user_id,), fetchone=True)
-    return templates.TemplateResponse("profile.html", {"request": request, "user": user, "profile": profile})
+
+    # Authorization check — prevent IDOR
+    if user_id != user["id"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    profile = run_query(
+        "SELECT * FROM users WHERE id=%s",
+        (user_id,),
+        fetchone=True
+    )
+
+    return templates.TemplateResponse(
+        "profile.html",
+        {"request": request, "user": user, "profile": profile}
+    )
 
 
 @router.post("/profile/update")
