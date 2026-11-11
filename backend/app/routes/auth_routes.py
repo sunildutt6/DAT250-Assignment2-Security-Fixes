@@ -6,6 +6,7 @@ from app.auth import hash_password, verify_password, create_session, clear_sessi
 from app.database import run_query
 from app.email_service import send_reset_email
 
+
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
@@ -87,7 +88,7 @@ def reset_password_request(request: Request, email: str = Form(...)):
     )
 
     if user:
-        token = str(int(time.time()))[-6:]
+        token = secrets.token_urlsafe(32)
         run_query(
             "INSERT INTO password_reset_tokens (user_id, token) VALUES (%s, %s)",
             (user["id"], token),
@@ -129,4 +130,9 @@ def reset_password_token(request: Request, token: str, new_password: str = Form(
         (hash_password(new_password), token_row["user_id"]),
         commit=True,
     )
+    run_query(
+        "DELETE FROM password_reset_tokens WHERE user_id=%s",
+        (token_row["user_id"],),
+        commit=True,
+)
     return RedirectResponse("/login", status_code=302)
