@@ -36,7 +36,12 @@ def login(request: Request, email: str = Form(...), password: str = Form(...)):
 
     token = create_session(user["id"])
     resp = RedirectResponse("/dashboard", status_code=302)
-    resp.set_cookie("session_token", token)
+    resp.set_cookie(
+        key="session_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+)
     return resp
 
 
